@@ -331,6 +331,7 @@ const ADMIN_CODE = "guru123";
 let state = {
   view: "home",              // home | vak | passage | ability | result | admin-login | admin
   nama: "",
+  nisn: "",
   kelas: "",
   vakAnswers: Array(VAK_ITEMS.length).fill(null),
   vakIndex: 0,
@@ -457,8 +458,11 @@ function renderHome(){
         <label class="field-label">Nama Siswa</label>
         <input type="text" id="in-nama" placeholder="Contoh: Rani Ayu" value="${esc(state.nama)}">
 
+        <label class="field-label">NISN</label>
+        <input type="text" id="in-nisn" placeholder="Contoh: 0091234567" inputmode="numeric" value="${esc(state.nisn)}">
+
         <label class="field-label">Kelas</label>
-        <input type="text" id="in-kelas" placeholder="Contoh: 5A" value="${esc(state.kelas)}">
+        <input type="text" id="in-kelas" placeholder="Contoh: 6A" value="${esc(state.kelas)}">
 
         <div class="btn-row" style="margin-top:20px;">
           <button class="btn btn-primary" id="btn-start">Mulai Tes \u2192</button>
@@ -468,9 +472,10 @@ function renderHome(){
     </div>
   `;
   document.getElementById("in-nama").addEventListener("input", e=> state.nama = e.target.value);
+  document.getElementById("in-nisn").addEventListener("input", e=> state.nisn = e.target.value);
   document.getElementById("in-kelas").addEventListener("input", e=> state.kelas = e.target.value);
   document.getElementById("btn-start").addEventListener("click", ()=>{
-    if(!state.nama.trim() || !state.kelas.trim()){ toast("Isi nama dan kelas dulu, ya."); return; }
+    if(!state.nama.trim() || !state.nisn.trim() || !state.kelas.trim()){ toast("Isi nama, NISN, dan kelas dulu, ya."); return; }
     state.view="vak"; state.vakIndex=0; render();
   });
   document.getElementById("btn-admin").addEventListener("click", ()=>{ state.view="admin-login"; render(); });
@@ -608,7 +613,7 @@ async function finishTest(){
   const vak = computeVak(state.vakAnswers);
   const ability = computeAbility(state.abilityAnswers);
   const result = {
-    nama: state.nama, kelas: state.kelas, timestamp: Date.now(),
+    nama: state.nama, nisn: state.nisn, kelas: state.kelas, timestamp: Date.now(),
     vak, ability
   };
   state.result = result;
@@ -640,7 +645,7 @@ function renderResult(){
         <div class="result-head">
           <span class="q-eyebrow" style="background:var(--good);">Selesai!</span>
           <div class="who">${esc(r.nama)}</div>
-          <div class="meta">Kelas ${esc(r.kelas)} \u00b7 ${new Date(r.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div>
+          <div class="meta">NISN ${esc(r.nisn||'-')} \u00b7 Kelas ${esc(r.kelas)} \u00b7 ${new Date(r.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div>
         </div>
 
         <h2 style="font-family:var(--font-display); font-size:16px; margin:0 0 4px;">Gaya Belajar</h2>
@@ -679,7 +684,7 @@ function renderResult(){
   `;
   document.getElementById("btn-pdf").addEventListener("click", ()=> downloadPdf(r));
   document.getElementById("btn-home").addEventListener("click", ()=>{
-    state.view="home"; state.nama=""; state.kelas="";
+    state.view="home"; state.nama=""; state.nisn=""; state.kelas="";
     state.vakAnswers = Array(VAK_ITEMS.length).fill(null); state.vakIndex=0;
     state.abilityAnswers = Array(ABILITY_ITEMS.length).fill(null); state.abilityIndex=0;
     state.result=null;
@@ -698,6 +703,7 @@ function downloadPdf(r){
 
     doc.setFontSize(11); doc.setFont("helvetica","normal");
     doc.text(`Nama Siswa : ${r.nama}`, margin, y); y+=16;
+    doc.text(`NISN       : ${r.nisn||'-'}`, margin, y); y+=16;
     doc.text(`Kelas      : ${r.kelas}`, margin, y); y+=16;
     doc.text(`Tanggal    : ${new Date(r.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`, margin, y); y+=28;
 
@@ -795,12 +801,13 @@ function renderAdminTable(){
     html += `<div class="empty-state">Belum ada siswa yang mengisi tes.<br>Bagikan tautan aplikasi ini kepada siswa untuk memulai.</div>`;
   } else {
     html += `<div class="admin-table-wrap"><table class="admin">
-      <thead><tr><th>Nama</th><th>Kelas</th><th>Gaya Belajar</th><th>Bahasa</th><th>Numerik</th><th>Penalaran</th><th>Total</th><th>Kategori</th><th>Tanggal</th><th></th></tr></thead>
+      <thead><tr><th>Nama</th><th>NISN</th><th>Kelas</th><th>Gaya Belajar</th><th>Bahasa</th><th>Numerik</th><th>Penalaran</th><th>Total</th><th>Kategori</th><th>Tanggal</th><th></th></tr></thead>
       <tbody>
       ${rows.map(x=>{
         const d = x.data;
         return `<tr>
           <td>${esc(d.nama)}</td>
+          <td>${esc(d.nisn||'-')}</td>
           <td>${esc(d.kelas)}</td>
           <td>${esc(d.vak.dominan)}</td>
           <td>${d.ability.Bahasa}</td>
@@ -829,11 +836,11 @@ function renderAdminTable(){
 
 function exportCsv(){
   const rows = state.adminData;
-  const header = ["Nama","Kelas","Gaya Belajar Dominan","Skor Visual","Skor Auditori","Skor Kinestetik","Skor Bahasa","Skor Numerik","Skor Penalaran","Skor Total","Kategori","Tanggal"];
+  const header = ["Nama","NISN","Kelas","Gaya Belajar Dominan","Skor Visual","Skor Auditori","Skor Kinestetik","Skor Bahasa","Skor Numerik","Skor Penalaran","Skor Total","Kategori","Tanggal"];
   const lines = [header.join(",")];
   rows.forEach(x=>{
     const d = x.data;
-    const vals = [d.nama, d.kelas, d.vak.dominan, d.vak.visual, d.vak.auditori, d.vak.kinestetik,
+    const vals = [d.nama, d.nisn||'-', d.kelas, d.vak.dominan, d.vak.visual, d.vak.auditori, d.vak.kinestetik,
       d.ability.Bahasa, d.ability.Numerik, d.ability.Penalaran, d.ability.total, d.ability.kategori,
       new Date(d.timestamp).toLocaleDateString('id-ID')];
     lines.push(vals.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(","));
