@@ -1,0 +1,888 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  :root{
+    --bg: #F4F7FB;
+    --paper: #FFFFFF;
+    --ink: #1E2A3A;
+    --ink-soft: #5B6B7F;
+    --line: #E1E8F0;
+    --visual: #3B7DD8;
+    --visual-soft: #E6EFFC;
+    --audit: #E08A3C;
+    --audit-soft: #FCEEE0;
+    --kines: #34A06B;
+    --kines-soft: #E4F5EC;
+    --brand: #6C5CE0;
+    --brand-dark: #5340C7;
+    --good: #2AA96B;
+    --warn: #E0A430;
+    --bad: #DD5D5D;
+    --radius: 20px;
+    --font-display: 'Baloo 2', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    font-family: var(--font-body);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  #root{
+    min-height: 100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 18px 14px 40px;
+  }
+  .shell{
+    width:100%;
+    max-width: 560px;
+  }
+
+  /* Top brand bar */
+  .brandbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .brand-badge{
+    width:38px;height:38px;border-radius:12px;
+    background:linear-gradient(135deg, var(--visual), var(--kines) 55%, var(--audit));
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display); font-weight:800; color:#fff; font-size:16px;
+    flex-shrink:0;
+  }
+  .brand-text{font-family:var(--font-display); font-weight:700; font-size:15px; line-height:1.15;}
+  .brand-text small{display:block; font-family:var(--font-body); font-weight:500; font-size:11.5px; color:var(--ink-soft);}
+
+  .card{
+    background:var(--paper);
+    border-radius: var(--radius);
+    border:1px solid var(--line);
+    box-shadow: 0 1px 2px rgba(30,42,58,.04), 0 12px 28px -18px rgba(30,42,58,.18);
+    padding: 26px 22px;
+  }
+
+  h1.hero{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size: 26px;
+    line-height:1.18;
+    margin: 4px 0 8px;
+  }
+  p.lede{ color:var(--ink-soft); font-size:14.5px; line-height:1.55; margin:0 0 20px;}
+
+  label.field-label{
+    display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:.04em; margin: 14px 0 6px;
+  }
+  input[type=text]{
+    width:100%; padding:13px 14px; border-radius:12px; border:1.5px solid var(--line);
+    font-size:16px; font-family:var(--font-body); color:var(--ink); background:#FBFCFE;
+  }
+  input[type=text]:focus{ outline:none; border-color: var(--brand); background:#fff; }
+  input[type=password]{
+    width:100%; padding:13px 14px; border-radius:12px; border:1.5px solid var(--line);
+    font-size:16px; font-family:var(--font-mono); background:#FBFCFE;
+  }
+  input[type=password]:focus{outline:none;border-color:var(--brand);}
+
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    font-family:var(--font-body); font-weight:700; font-size:15.5px;
+    border-radius:14px; padding:14px 18px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%;
+    transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  .btn:active{ transform: scale(0.98); }
+  .btn-primary{ background: var(--brand); color:#fff; box-shadow: 0 10px 24px -12px rgba(108,92,224,.55);}
+  .btn-primary:hover{ background: var(--brand-dark); }
+  .btn-primary:disabled{ opacity:.4; cursor:not-allowed; box-shadow:none;}
+  .btn-ghost{ background:transparent; color:var(--ink-soft); font-weight:600; }
+  .btn-ghost:hover{ color:var(--ink); }
+  .btn-outline{ background:#fff; color:var(--ink); border:1.5px solid var(--line); }
+  .btn-outline:hover{ border-color:var(--brand); color:var(--brand-dark); }
+  .btn-sm{ padding:9px 14px; font-size:13.5px; width:auto; border-radius:10px; }
+  .btn-row{ display:flex; gap:10px; margin-top:10px; }
+  .btn-row .btn{ flex:1; }
+
+  .link-row{ text-align:center; margin-top:16px; }
+  .link-row button{
+    background:none;border:none;color:var(--ink-soft);font-size:13px;font-family:var(--font-body);
+    text-decoration:underline; cursor:pointer; padding:6px;
+  }
+
+  /* Progress */
+  .progress-wrap{ margin-bottom:16px; }
+  .progress-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;}
+  .progress-label{ font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;}
+  .progress-count{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft);}
+  .progress-track{ height:8px; background:var(--line); border-radius:99px; overflow:hidden; }
+  .progress-fill{ height:100%; border-radius:99px; transition: width .35s ease; }
+
+  .q-eyebrow{
+    font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:#fff; display:inline-block; padding:4px 10px; border-radius:99px; margin-bottom:14px;
+  }
+  .q-text{ font-family:var(--font-display); font-weight:700; font-size:19px; line-height:1.35; margin: 0 0 18px; }
+
+  .opt{
+    display:flex; align-items:flex-start; gap:12px;
+    width:100%; text-align:left;
+    background:#FBFCFE; border:1.5px solid var(--line); border-radius:14px;
+    padding:14px 15px; margin-bottom:10px; cursor:pointer;
+    font-family:var(--font-body); font-size:14.5px; color:var(--ink); line-height:1.45;
+    transition: border-color .12s ease, background .12s ease;
+  }
+  .opt:hover{ border-color: var(--brand); background:#F7F5FE; }
+  .opt .opt-dot{
+    flex-shrink:0; width:22px;height:22px;border-radius:50%;border:2px solid var(--line);
+    margin-top:1px;
+  }
+  .opt.selected{ border-color: var(--brand); background:#F1EEFD; }
+  .opt.selected .opt-dot{ border-color:var(--brand); background:var(--brand); }
+
+  .passage-box{
+    background: var(--visual-soft); border:1.5px solid #CFE0F7; border-radius:16px;
+    padding:18px; margin-bottom:18px; font-size:14.5px; line-height:1.65; color:var(--ink);
+  }
+  .passage-tag{ font-size:11px; font-weight:800; color:var(--visual); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; display:block;}
+
+  /* Result screen */
+  .result-head{ text-align:center; margin-bottom:20px; }
+  .result-head .who{ font-family:var(--font-display); font-weight:700; font-size:20px; margin:10px 0 2px;}
+  .result-head .meta{ color:var(--ink-soft); font-size:13px; }
+
+  .donut-wrap{ display:flex; justify-content:center; margin: 18px 0 10px; }
+  .donut{
+    width:170px; height:170px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .donut-hole{
+    width:110px; height:110px; border-radius:50%; background:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .donut-hole b{ font-family:var(--font-display); font-size:15px; }
+  .donut-hole span{ font-size:10.5px; color:var(--ink-soft); text-align:center; padding:0 8px;}
+
+  .legend{ display:flex; justify-content:center; gap:16px; margin-bottom:22px; flex-wrap:wrap;}
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-soft); font-weight:600;}
+  .legend-dot{ width:10px;height:10px;border-radius:50%;}
+
+  .subtes-row{ margin-bottom:14px; }
+  .subtes-top{ display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:6px;}
+  .subtes-track{ height:10px; border-radius:99px; background:var(--line); overflow:hidden;}
+  .subtes-fill{ height:100%; border-radius:99px; }
+
+  .badge{
+    display:inline-block; padding:6px 14px; border-radius:99px; font-weight:700; font-size:13px;
+    margin-top:6px;
+  }
+
+  .divider{ height:1px; background:var(--line); margin:20px 0; border:none;}
+
+  .rec-box{ background:#FAFAFC; border-radius:14px; padding:14px 16px; font-size:13.5px; line-height:1.6; color:var(--ink-soft); margin-top: 6px;}
+  .rec-box b{ color:var(--ink); }
+
+  /* Admin */
+  .admin-table-wrap{ overflow-x:auto; margin-top:10px; border:1px solid var(--line); border-radius:14px;}
+  table.admin{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:640px;}
+  table.admin th{ background:#F5F3FE; color:var(--brand-dark); text-align:left; padding:10px 12px; font-weight:700; position:sticky; top:0;}
+  table.admin td{ padding:9px 12px; border-top:1px solid var(--line); }
+  table.admin tr:hover td{ background:#FAFAFE; }
+  .pill{ padding:3px 9px; border-radius:99px; font-size:11px; font-weight:700; }
+
+  .stat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin: 16px 0; }
+  .stat-card{ background:#FAFAFC; border:1px solid var(--line); border-radius:14px; padding:14px 10px; text-align:center;}
+  .stat-card b{ font-family:var(--font-display); font-size:22px; display:block; }
+  .stat-card span{ font-size:11px; color:var(--ink-soft); font-weight:600; }
+
+  .empty-state{ text-align:center; padding: 30px 10px; color:var(--ink-soft); font-size:14px;}
+
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:11px 20px; border-radius:12px; font-size:13.5px;
+    font-weight:600; box-shadow:0 12px 30px -10px rgba(0,0,0,.4); z-index:50; opacity:0;
+    transition:opacity .25s ease; pointer-events:none;
+  }
+  .toast.show{ opacity:1; }
+
+  @media (max-width:400px){
+    .card{ padding:20px 16px; }
+    h1.hero{ font-size:22px; }
+    .stat-grid{ grid-template-columns:repeat(3,1fr); gap:6px;}
+    .stat-card{ padding:10px 6px;}
+    .stat-card b{ font-size:18px; }
+  }
+</style>
+
+<div id="root"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+
+// ---------------------------------------------------------------
+// DATA: butir Instrumen 1 (VAK) & Instrumen 2 (Kemampuan Belajar)
+// ---------------------------------------------------------------
+const VAK_ITEMS = [
+  {q:"Saat guru menjelaskan pelajaran baru, saya lebih mudah mengerti jika:", opts:[
+    "Melihat gambar, diagram, atau tulisan di papan tulis.",
+    "Mendengarkan penjelasan guru dengan saksama.",
+    "Langsung mencoba atau mempraktikkannya sendiri."]},
+  {q:"Ketika mengingat sesuatu, saya lebih mudah mengingat dengan cara:", opts:[
+    "Membayangkan tulisan atau gambarnya di dalam pikiran.",
+    "Mengucapkannya berulang-ulang atau menyanyikannya.",
+    "Menuliskannya atau mempraktikkannya dengan gerakan tangan."]},
+  {q:"Saat membaca buku cerita, saya paling suka jika buku itu:", opts:[
+    "Banyak gambar dan warna yang menarik.",
+    "Dibacakan dengan suara yang jelas oleh orang lain.",
+    "Bisa saya perankan atau saya buat gerakannya."]},
+  {q:"Kegiatan yang paling saya sukai di kelas adalah:", opts:[
+    "Melihat video, poster, atau peta pada pelajaran.",
+    "Mendengarkan cerita, diskusi, atau musik.",
+    "Melakukan percobaan, permainan gerak, atau membuat prakarya."]},
+  {q:"Saat mengerjakan tugas, saya lebih suka:", opts:[
+    "Membuat catatan berwarna, mind map, atau gambar.",
+    "Membaca soal dengan suara pelan atau berdiskusi dengan teman.",
+    "Sambil bergerak, misalnya sambil berjalan atau memegang benda."]},
+  {q:"Jika tersesat di tempat baru, saya akan lebih cepat paham dengan:", opts:[
+    "Melihat peta atau denah.",
+    "Bertanya dan mendengar arahan orang lain.",
+    "Langsung berjalan mencoba beberapa arah."]},
+  {q:"Saya lebih mudah menghafal perkalian jika:", opts:[
+    "Melihat tabel perkalian yang ditulis atau ditempel.",
+    "Melagukan atau mengucapkannya berulang kali.",
+    "Menghitung menggunakan jari, kelereng, atau alat bantu lain."]},
+  {q:"Ketika merasa bosan di kelas, biasanya saya:", opts:[
+    "Melamun atau memperhatikan sesuatu di sekitar ruangan.",
+    "Bergumam, bersenandung, atau mengobrol dengan teman.",
+    "Menggerakkan kaki/tangan, memainkan alat tulis, atau ingin berjalan."]},
+  {q:"Saya lebih suka guru menjelaskan pelajaran dengan:", opts:[
+    "Menuliskan poin-poin penting dan gambar di papan tulis.",
+    "Bercerita atau menjelaskan panjang lebar secara lisan.",
+    "Mengajak siswa melakukan kegiatan atau permainan langsung."]},
+  {q:"Ketika mengeja atau menulis kata sulit, saya lebih terbantu dengan:", opts:[
+    "Membayangkan bentuk tulisan kata tersebut.",
+    "Mengeja hurufnya sambil bersuara.",
+    "Menulis kata itu berulang kali dengan tangan."]},
+  {q:"Saat istirahat, permainan yang paling saya sukai adalah:", opts:[
+    "Menggambar, mewarnai, atau menyusun puzzle.",
+    "Bernyanyi, mengobrol, atau bermain tebak kata.",
+    "Berlari, bermain bola, atau permainan yang banyak bergerak."]},
+  {q:"Saya bisa duduk diam dan fokus paling lama ketika:", opts:[
+    "Melihat sesuatu yang menarik, seperti gambar atau video.",
+    "Mendengarkan cerita atau musik yang saya sukai.",
+    "Sulit bagi saya untuk duduk diam terlalu lama, saya ingin bergerak."]},
+  {q:"Ketika belajar kelompok, peran yang paling saya sukai adalah:", opts:[
+    "Membuat catatan, poster, atau tampilan hasil diskusi.",
+    "Menjadi juru bicara yang menjelaskan hasil diskusi.",
+    "Menjadi orang yang mempraktikkan/mendemonstrasikan hasil diskusi."]},
+  {q:"Saya lebih suka petunjuk mengerjakan sesuatu diberikan dalam bentuk:", opts:[
+    "Tulisan langkah-langkah atau gambar/diagram.",
+    "Penjelasan lisan langkah demi langkah.",
+    "Contoh langsung yang saya ikuti sambil praktik."]},
+  {q:"Saat merasa senang, biasanya saya menunjukkannya dengan:", opts:[
+    "Tersenyum lebar dan ekspresi wajah yang ceria.",
+    "Berbicara riang, tertawa, atau bercerita ke orang lain.",
+    "Melompat, bertepuk tangan, atau bergerak kegirangan."]},
+];
+// index 0=Visual, 1=Auditori, 2=Kinestetik
+
+const PASSAGE = "Setiap pagi, Rani membantu ibunya menyiram tanaman di halaman rumah. Rani sangat senang melihat bunga-bunga bermekaran. Suatu hari, Rani menemukan seekor kupu-kupu hinggap di atas bunga mawar. Ia mengamati kupu-kupu itu tanpa mengganggunya. Rani lalu bercerita kepada teman-temannya di sekolah tentang pengalamannya itu.";
+
+const ABILITY_ITEMS = [
+  {subtes:"Bahasa", q:"Apa yang dilakukan Rani setiap pagi?", opts:["Menyiram tanaman bersama ibunya","Bermain di taman sekolah","Menangkap kupu-kupu","Menyapu halaman rumah"], correct:0},
+  {subtes:"Bahasa", q:"Di mana Rani menemukan kupu-kupu?", opts:["Di kolam ikan","Di atas bunga mawar","Di dalam rumah","Di sekolah"], correct:1},
+  {subtes:"Bahasa", q:"Bagaimana sikap Rani terhadap kupu-kupu yang ditemukannya?", opts:["Menangkapnya untuk dibawa pulang","Mengusirnya karena takut","Mengamatinya tanpa mengganggu","Membiarkannya lalu pergi"], correct:2},
+  {subtes:"Bahasa", q:"Kepada siapa Rani bercerita tentang pengalamannya?", opts:["Ibunya","Gurunya","Teman-temannya di sekolah","Tetangganya"], correct:2},
+  {subtes:"Bahasa", q:"Kata \u201cbermekaran\u201d pada teks tersebut memiliki arti...", opts:["Layu","Sedang tumbuh besar","Sedang mekar/berbunga","Sudah gugur"], correct:2},
+
+  {subtes:"Numerik", q:"245 + 138 = ...", opts:["373","383","393","473"], correct:1},
+  {subtes:"Numerik", q:"6 x 7 = ...", opts:["36","42","48","56"], correct:1},
+  {subtes:"Numerik", q:"Ibu membeli 3 lusin telur. Berapa butir telur yang dibeli Ibu?", opts:["24","30","36","42"], correct:2},
+  {subtes:"Numerik", q:"Urutan bilangan dari yang TERKECIL adalah...", opts:["45, 54, 27, 63","27, 45, 54, 63","63, 54, 45, 27","54, 27, 63, 45"], correct:1},
+  {subtes:"Numerik", q:"Sebuah kue dibagi menjadi 8 potong sama besar. Rani makan 2 potong. Berapa bagian kue yang dimakan Rani (pecahan paling sederhana)?", opts:["1/8","1/4","2/8","1/2"], correct:1},
+
+  {subtes:"Penalaran", q:"Lanjutkan pola bilangan berikut: 2, 4, 6, 8, ...", opts:["9","10","12","14"], correct:1},
+  {subtes:"Penalaran", q:"Lanjutkan pola berikut: 3, 6, 9, 12, ...", opts:["13","14","15","16"], correct:2},
+  {subtes:"Penalaran", q:"Manakah kata yang TIDAK sekelompok dengan yang lain?", opts:["Apel","Mangga","Wortel","Jeruk"], correct:2},
+  {subtes:"Penalaran", q:"Jika hari ini Rabu, maka 3 hari setelah ini adalah hari...", opts:["Jumat","Sabtu","Minggu","Senin"], correct:1},
+  {subtes:"Penalaran", q:"Lengkapi pola bentuk berikut: Lingkaran, Segitiga, Lingkaran, Segitiga, ...", opts:["Lingkaran","Segitiga","Persegi","Oval"], correct:0},
+];
+
+const ADMIN_CODE = "guru123";
+
+// ---------------------------------------------------------------
+// STATE
+// ---------------------------------------------------------------
+let state = {
+  view: "home",              // home | vak | passage | ability | result | admin-login | admin
+  nama: "",
+  kelas: "",
+  vakAnswers: Array(VAK_ITEMS.length).fill(null),
+  vakIndex: 0,
+  abilityAnswers: Array(ABILITY_ITEMS.length).fill(null),
+  abilityIndex: 0,
+  result: null,
+  adminData: [],
+  adminLoading: false,
+  adminError: "",
+};
+
+const root = document.getElementById("root");
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=> t.classList.remove("show"), 2600);
+}
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function brandbar(sub){
+  return `<div class="brandbar">
+    <div class="brand-badge">D</div>
+    <div class="brand-text">Tes Diagnostik Siswa<small>${esc(sub||"Gaya belajar & kemampuan belajar")}</small></div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------
+// SCORING
+// ---------------------------------------------------------------
+function computeVak(answers){
+  let v=0,a=0,k=0;
+  answers.forEach(idx=>{ if(idx===0)v++; else if(idx===1)a++; else if(idx===2)k++; });
+  let dominan;
+  const arr=[v,a,k];
+  const max=Math.max(...arr);
+  const spread = Math.max(...arr)-Math.min(...arr);
+  const countMax = arr.filter(x=>x===max).length;
+  if(spread<=2) dominan="Seimbang / Multimodal";
+  else if(countMax>1) dominan="Campuran";
+  else dominan = ["Visual","Auditori","Kinestetik"][arr.indexOf(max)];
+  return {visual:v, auditori:a, kinestetik:k, dominan};
+}
+
+function computeAbility(answers){
+  const groups = {Bahasa:[0,4], Numerik:[5,9], Penalaran:[10,14]};
+  const scores = {};
+  for(const key in groups){
+    const [s,e] = groups[key];
+    let correct=0, total=0;
+    for(let i=s;i<=e;i++){ total++; if(answers[i]===ABILITY_ITEMS[i].correct) correct++; }
+    scores[key] = Math.round((correct/total)*100);
+  }
+  const total = Math.round((scores.Bahasa+scores.Numerik+scores.Penalaran)/3);
+  let kategori, kcolor;
+  if(total>=80){kategori="Tinggi"; kcolor="var(--good)";}
+  else if(total>=60){kategori="Sedang"; kcolor="var(--warn)";}
+  else if(total>=40){kategori="Perlu Pendampingan"; kcolor="#E08A3C";}
+  else {kategori="Perlu Pendampingan Intensif"; kcolor="var(--bad)";}
+  return {...scores, total, kategori, kcolor};
+}
+
+const REKOMENDASI = {
+  "Visual":"Gunakan gambar, diagram, peta konsep, kartu bergambar, warna-warna penanda, dan catatan tertulis rapi saat belajar di rumah.",
+  "Auditori":"Gunakan diskusi, penjelasan lisan, rekaman audio, lagu/pantun, dan sesi tanya-jawab saat belajar di rumah.",
+  "Kinestetik":"Gunakan praktik langsung, permainan edukatif, alat peraga yang bisa disentuh, dan jeda gerak (brain break) saat belajar di rumah.",
+  "Campuran":"Anak menunjukkan kekuatan pada dua gaya belajar sekaligus. Variasikan metode sesuai kombinasi tersebut.",
+  "Seimbang / Multimodal":"Anak cukup fleksibel dan dapat belajar dengan berbagai cara: visual, auditori, maupun kinestetik."
+};
+
+// ---------------------------------------------------------------
+// STORAGE
+// ---------------------------------------------------------------
+async function saveSubmission(data){
+  const id = Date.now()+"-"+Math.random().toString(36).slice(2,8);
+  try{
+    await window.storage.set("submission:"+id, JSON.stringify(data), true);
+    return true;
+  }catch(e){
+    console.error("storage error", e);
+    return false;
+  }
+}
+
+async function loadAllSubmissions(){
+  const out = [];
+  try{
+    const listRes = await window.storage.list("submission:", true);
+    const keys = (listRes && listRes.keys) || [];
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, true);
+        if(r && r.value) out.push({key:k, data: JSON.parse(r.value)});
+      }catch(e){ /* skip unreadable entry */ }
+    }
+  }catch(e){
+    console.error("list error", e);
+  }
+  out.sort((a,b)=> (b.data.timestamp||0) - (a.data.timestamp||0));
+  return out;
+}
+
+async function deleteSubmission(key){
+  try{ await window.storage.delete(key, true); return true; }
+  catch(e){ return false; }
+}
+
+// ---------------------------------------------------------------
+// RENDER: HOME
+// ---------------------------------------------------------------
+function renderHome(){
+  root.innerHTML = `
+    <div class="shell">
+      ${brandbar()}
+      <div class="card">
+        <h1 class="hero">Yuk, kenali cara belajarmu! \u{1F31F}</h1>
+        <p class="lede">Tes ini punya dua bagian: mengenal gaya belajarmu (Visual, Auditori, atau Kinestetik) dan mengukur kemampuan dasar Bahasa, Berhitung, dan Penalaran. Isi namamu dulu, ya.</p>
+
+        <label class="field-label">Nama Siswa</label>
+        <input type="text" id="in-nama" placeholder="Contoh: Rani Ayu" value="${esc(state.nama)}">
+
+        <label class="field-label">Kelas</label>
+        <input type="text" id="in-kelas" placeholder="Contoh: 5A" value="${esc(state.kelas)}">
+
+        <div class="btn-row" style="margin-top:20px;">
+          <button class="btn btn-primary" id="btn-start">Mulai Tes \u2192</button>
+        </div>
+        <div class="link-row"><button id="btn-admin">Masuk sebagai Guru</button></div>
+      </div>
+    </div>
+  `;
+  document.getElementById("in-nama").addEventListener("input", e=> state.nama = e.target.value);
+  document.getElementById("in-kelas").addEventListener("input", e=> state.kelas = e.target.value);
+  document.getElementById("btn-start").addEventListener("click", ()=>{
+    if(!state.nama.trim() || !state.kelas.trim()){ toast("Isi nama dan kelas dulu, ya."); return; }
+    state.view="vak"; state.vakIndex=0; render();
+  });
+  document.getElementById("btn-admin").addEventListener("click", ()=>{ state.view="admin-login"; render(); });
+}
+
+// ---------------------------------------------------------------
+// RENDER: VAK QUESTION
+// ---------------------------------------------------------------
+function renderVak(){
+  const i = state.vakIndex;
+  const item = VAK_ITEMS[i];
+  const pct = Math.round((i/(VAK_ITEMS.length))*100);
+  const chosen = state.vakAnswers[i];
+
+  root.innerHTML = `
+    <div class="shell">
+      ${brandbar("Bagian 1: Gaya Belajar")}
+      <div class="card">
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span class="progress-label">Angket Gaya Belajar</span>
+            <span class="progress-count">${i+1} / ${VAK_ITEMS.length}</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:${pct}%; background:var(--brand);"></div></div>
+        </div>
+        <span class="q-eyebrow" style="background:var(--brand);">Pilih satu jawaban</span>
+        <p class="q-text">${esc(item.q)}</p>
+        <div id="opts">
+          ${item.opts.map((op,idx)=>`
+            <div class="opt ${chosen===idx?'selected':''}" data-idx="${idx}">
+              <span class="opt-dot"></span><span>${esc(op)}</span>
+            </div>`).join("")}
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-back" style="flex:0 0 auto; width:auto; padding:14px 18px;" ${i===0?'disabled':''}>\u2190 Kembali</button>
+          <button class="btn btn-primary" id="btn-next" ${chosen===null?'disabled':''}>${i===VAK_ITEMS.length-1? "Lanjut ke Tes Kemampuan \u2192" : "Berikutnya \u2192"}</button>
+        </div>
+      </div>
+    </div>
+  `;
+  root.querySelectorAll(".opt").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.vakAnswers[i] = parseInt(el.dataset.idx,10);
+      render();
+    });
+  });
+  document.getElementById("btn-back").addEventListener("click", ()=>{
+    if(i>0){ state.vakIndex--; render(); }
+  });
+  document.getElementById("btn-next").addEventListener("click", ()=>{
+    if(state.vakAnswers[i]===null) return;
+    if(i===VAK_ITEMS.length-1){ state.view="passage"; render(); }
+    else { state.vakIndex++; render(); }
+  });
+}
+
+// ---------------------------------------------------------------
+// RENDER: PASSAGE INTRO (before Bahasa subtest)
+// ---------------------------------------------------------------
+function renderPassage(){
+  root.innerHTML = `
+    <div class="shell">
+      ${brandbar("Bagian 2: Kemampuan Belajar")}
+      <div class="card">
+        <span class="q-eyebrow" style="background:var(--visual);">Bacaan</span>
+        <p class="q-text" style="font-size:17px;">Bacalah cerita berikut, lalu jawab 5 soal setelahnya.</p>
+        <div class="passage-box">
+          <span class="passage-tag">Cerita Rani</span>
+          ${esc(PASSAGE)}
+        </div>
+        <button class="btn btn-primary" id="btn-go">Sudah, mulai soal \u2192</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("btn-go").addEventListener("click", ()=>{ state.view="ability"; state.abilityIndex=0; render(); });
+}
+
+// ---------------------------------------------------------------
+// RENDER: ABILITY QUESTION
+// ---------------------------------------------------------------
+const SUBTES_COLOR = {Bahasa:"var(--visual)", Numerik:"var(--audit)", Penalaran:"var(--kines)"};
+
+function renderAbility(){
+  const i = state.abilityIndex;
+  const item = ABILITY_ITEMS[i];
+  const pct = Math.round((i/ABILITY_ITEMS.length)*100);
+  const chosen = state.abilityAnswers[i];
+  const showPassage = item.subtes==="Bahasa";
+
+  root.innerHTML = `
+    <div class="shell">
+      ${brandbar("Bagian 2: Kemampuan Belajar")}
+      <div class="card">
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span class="progress-label">Subtes ${esc(item.subtes)}</span>
+            <span class="progress-count">${i+1} / ${ABILITY_ITEMS.length}</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:${pct}%; background:${SUBTES_COLOR[item.subtes]};"></div></div>
+        </div>
+        ${showPassage ? `<div class="passage-box" style="margin-bottom:16px;"><span class="passage-tag">Ingat cerita Rani</span>${esc(PASSAGE)}</div>` : ""}
+        <span class="q-eyebrow" style="background:${SUBTES_COLOR[item.subtes]};">${esc(item.subtes)}</span>
+        <p class="q-text">${esc(item.q)}</p>
+        <div id="opts">
+          ${item.opts.map((op,idx)=>`
+            <div class="opt ${chosen===idx?'selected':''}" data-idx="${idx}">
+              <span class="opt-dot"></span><span>${esc(op)}</span>
+            </div>`).join("")}
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-back" style="flex:0 0 auto; width:auto; padding:14px 18px;" ${i===0?'disabled':''}>\u2190 Kembali</button>
+          <button class="btn btn-primary" id="btn-next" ${chosen===null?'disabled':''}>${i===ABILITY_ITEMS.length-1? "Selesai & Lihat Hasil \u2192" : "Berikutnya \u2192"}</button>
+        </div>
+      </div>
+    </div>
+  `;
+  root.querySelectorAll(".opt").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.abilityAnswers[i] = parseInt(el.dataset.idx,10);
+      render();
+    });
+  });
+  document.getElementById("btn-back").addEventListener("click", ()=>{
+    if(i>0){ state.abilityIndex--; render(); }
+  });
+  document.getElementById("btn-next").addEventListener("click", async ()=>{
+    if(state.abilityAnswers[i]===null) return;
+    if(i===ABILITY_ITEMS.length-1){
+      await finishTest();
+    } else { state.abilityIndex++; render(); }
+  });
+}
+
+async function finishTest(){
+  const vak = computeVak(state.vakAnswers);
+  const ability = computeAbility(state.abilityAnswers);
+  const result = {
+    nama: state.nama, kelas: state.kelas, timestamp: Date.now(),
+    vak, ability
+  };
+  state.result = result;
+  root.innerHTML = `<div class="shell"><div class="card"><p class="lede">Menyimpan hasil...</p></div></div>`;
+  await saveSubmission(result);
+  state.view="result";
+  render();
+}
+
+// ---------------------------------------------------------------
+// RENDER: RESULT
+// ---------------------------------------------------------------
+function donutGradient(v,a,k){
+  const total = v+a+k || 1;
+  const pv = v/total*360, pa = a/total*360, pk = k/total*360;
+  const c1 = pv, c2 = pv+pa;
+  return `conic-gradient(var(--visual) 0deg ${c1}deg, var(--audit) ${c1}deg ${c2}deg, var(--kines) ${c2}deg 360deg)`;
+}
+
+function renderResult(){
+  const r = state.result;
+  const {visual, auditori, kinestetik, dominan} = r.vak;
+  const a = r.ability;
+
+  root.innerHTML = `
+    <div class="shell">
+      ${brandbar("Hasil Tes")}
+      <div class="card">
+        <div class="result-head">
+          <span class="q-eyebrow" style="background:var(--good);">Selesai!</span>
+          <div class="who">${esc(r.nama)}</div>
+          <div class="meta">Kelas ${esc(r.kelas)} \u00b7 ${new Date(r.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+
+        <h2 style="font-family:var(--font-display); font-size:16px; margin:0 0 4px;">Gaya Belajar</h2>
+        <div class="donut-wrap">
+          <div class="donut" style="background:${donutGradient(visual,auditori,kinestetik)};">
+            <div class="donut-hole"><b>${esc(dominan)}</b><span>gaya dominan</span></div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:var(--visual);"></span>Visual ${visual}</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--audit);"></span>Auditori ${auditori}</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--kines);"></span>Kinestetik ${kinestetik}</div>
+        </div>
+        <div class="rec-box"><b>Saran:</b> ${esc(REKOMENDASI[dominan])}</div>
+
+        <hr class="divider">
+
+        <h2 style="font-family:var(--font-display); font-size:16px; margin:0 0 12px;">Kemampuan Belajar Dasar</h2>
+        ${["Bahasa","Numerik","Penalaran"].map(k=>`
+          <div class="subtes-row">
+            <div class="subtes-top"><span>${k}</span><span>${a[k]}</span></div>
+            <div class="subtes-track"><div class="subtes-fill" style="width:${a[k]}%; background:${SUBTES_COLOR[k]};"></div></div>
+          </div>`).join("")}
+        <div style="text-align:center; margin-top:14px;">
+          <div style="font-size:13px; color:var(--ink-soft); font-weight:600;">Skor Total</div>
+          <div style="font-family:var(--font-display); font-size:34px; font-weight:800;">${a.total}</div>
+          <span class="badge" style="background:${a.kcolor}22; color:${a.kcolor};">${esc(a.kategori)}</span>
+        </div>
+
+        <div class="btn-row" style="margin-top:24px;">
+          <button class="btn btn-outline" id="btn-pdf">\u2B07 Unduh Hasil (PDF)</button>
+        </div>
+        <div class="link-row"><button id="btn-home">Kembali ke Beranda</button></div>
+      </div>
+    </div>
+  `;
+  document.getElementById("btn-pdf").addEventListener("click", ()=> downloadPdf(r));
+  document.getElementById("btn-home").addEventListener("click", ()=>{
+    state.view="home"; state.nama=""; state.kelas="";
+    state.vakAnswers = Array(VAK_ITEMS.length).fill(null); state.vakIndex=0;
+    state.abilityAnswers = Array(ABILITY_ITEMS.length).fill(null); state.abilityIndex=0;
+    state.result=null;
+    render();
+  });
+}
+
+function downloadPdf(r){
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:"pt", format:"a4"});
+    const margin = 48; let y = margin;
+    doc.setFont("helvetica","bold"); doc.setFontSize(18);
+    doc.text("Hasil Tes Diagnostik Siswa", margin, y); y+=26;
+    doc.setDrawColor(225,232,240); doc.line(margin,y,545,y); y+=22;
+
+    doc.setFontSize(11); doc.setFont("helvetica","normal");
+    doc.text(`Nama Siswa : ${r.nama}`, margin, y); y+=16;
+    doc.text(`Kelas      : ${r.kelas}`, margin, y); y+=16;
+    doc.text(`Tanggal    : ${new Date(r.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`, margin, y); y+=28;
+
+    doc.setFont("helvetica","bold"); doc.setFontSize(13);
+    doc.text("1. Gaya Belajar (VAK)", margin, y); y+=18;
+    doc.setFont("helvetica","normal"); doc.setFontSize(11);
+    doc.text(`Skor Visual: ${r.vak.visual} / 15   Auditori: ${r.vak.auditori} / 15   Kinestetik: ${r.vak.kinestetik} / 15`, margin, y); y+=16;
+    doc.setFont("helvetica","bold");
+    doc.text(`Gaya Belajar Dominan: ${r.vak.dominan}`, margin, y); y+=16;
+    doc.setFont("helvetica","normal");
+    const recLines = doc.splitTextToSize(`Saran: ${REKOMENDASI[r.vak.dominan]}`, 497);
+    doc.text(recLines, margin, y); y += recLines.length*14 + 18;
+
+    doc.setFont("helvetica","bold"); doc.setFontSize(13);
+    doc.text("2. Kemampuan Belajar Dasar", margin, y); y+=18;
+    doc.setFont("helvetica","normal"); doc.setFontSize(11);
+    doc.text(`Skor Bahasa   : ${r.ability.Bahasa}`, margin, y); y+=16;
+    doc.text(`Skor Numerik  : ${r.ability.Numerik}`, margin, y); y+=16;
+    doc.text(`Skor Penalaran: ${r.ability.Penalaran}`, margin, y); y+=16;
+    doc.setFont("helvetica","bold");
+    doc.text(`Skor Total    : ${r.ability.total}  (${r.ability.kategori})`, margin, y); y+=28;
+
+    doc.setFontSize(9); doc.setFont("helvetica","italic"); doc.setTextColor(120,120,120);
+    doc.text("Dokumen ini dihasilkan otomatis oleh aplikasi Tes Diagnostik Siswa SD.", margin, 780);
+
+    doc.save(`Hasil-Tes-${r.nama.replace(/\s+/g,'_')}.pdf`);
+  }catch(e){
+    console.error(e);
+    toast("Gagal membuat PDF. Coba lagi.");
+  }
+}
+
+// ---------------------------------------------------------------
+// RENDER: ADMIN LOGIN
+// ---------------------------------------------------------------
+function renderAdminLogin(){
+  root.innerHTML = `
+    <div class="shell">
+      ${brandbar("Area Guru")}
+      <div class="card">
+        <h1 class="hero" style="font-size:21px;">Masuk sebagai Guru</h1>
+        <p class="lede">Masukkan kode akses guru untuk melihat rekap hasil seluruh siswa.</p>
+        <label class="field-label">Kode Akses</label>
+        <input type="password" id="in-code" placeholder="Kode akses">
+        <div id="err" style="color:var(--bad); font-size:13px; margin-top:8px; display:none;">Kode salah, coba lagi.</div>
+        <div class="btn-row" style="margin-top:18px;">
+          <button class="btn btn-primary" id="btn-enter">Masuk</button>
+        </div>
+        <div class="link-row"><button id="btn-back-home">\u2190 Kembali ke beranda siswa</button></div>
+      </div>
+    </div>
+  `;
+  document.getElementById("btn-enter").addEventListener("click", ()=>{
+    const val = document.getElementById("in-code").value;
+    if(val===ADMIN_CODE){ state.view="admin"; render(); loadAdmin(); }
+    else { document.getElementById("err").style.display="block"; }
+  });
+  document.getElementById("btn-back-home").addEventListener("click", ()=>{ state.view="home"; render(); });
+}
+
+// ---------------------------------------------------------------
+// RENDER: ADMIN DASHBOARD
+// ---------------------------------------------------------------
+async function loadAdmin(){
+  state.adminLoading = true; state.adminError="";
+  renderAdminTable();
+  const data = await loadAllSubmissions();
+  state.adminData = data;
+  state.adminLoading = false;
+  renderAdminTable();
+}
+
+function renderAdminTable(){
+  const wrap = document.getElementById("admin-body");
+  if(!wrap) return;
+  if(state.adminLoading){
+    wrap.innerHTML = `<div class="empty-state">Memuat data...</div>`;
+    return;
+  }
+  const rows = state.adminData;
+  const n = rows.length;
+  const avg = n? Math.round(rows.reduce((s,x)=>s+x.data.ability.total,0)/n) : 0;
+  const dominanCount = {};
+  rows.forEach(x=>{ const d=x.data.vak.dominan; dominanCount[d]=(dominanCount[d]||0)+1; });
+  const topDominan = Object.keys(dominanCount).sort((a,b)=>dominanCount[b]-dominanCount[a])[0] || "-";
+
+  let html = `
+    <div class="stat-grid">
+      <div class="stat-card"><b>${n}</b><span>Siswa Mengisi</span></div>
+      <div class="stat-card"><b>${n?avg:'-'}</b><span>Rata-rata Skor</span></div>
+      <div class="stat-card" style="overflow:hidden;"><b style="font-size:14px;">${esc(topDominan)}</b><span>Gaya Terbanyak</span></div>
+    </div>
+  `;
+  if(n===0){
+    html += `<div class="empty-state">Belum ada siswa yang mengisi tes.<br>Bagikan tautan aplikasi ini kepada siswa untuk memulai.</div>`;
+  } else {
+    html += `<div class="admin-table-wrap"><table class="admin">
+      <thead><tr><th>Nama</th><th>Kelas</th><th>Gaya Belajar</th><th>Bahasa</th><th>Numerik</th><th>Penalaran</th><th>Total</th><th>Kategori</th><th>Tanggal</th><th></th></tr></thead>
+      <tbody>
+      ${rows.map(x=>{
+        const d = x.data;
+        return `<tr>
+          <td>${esc(d.nama)}</td>
+          <td>${esc(d.kelas)}</td>
+          <td>${esc(d.vak.dominan)}</td>
+          <td>${d.ability.Bahasa}</td>
+          <td>${d.ability.Numerik}</td>
+          <td>${d.ability.Penalaran}</td>
+          <td><b>${d.ability.total}</b></td>
+          <td><span class="pill" style="background:${d.ability.kcolor}22; color:${d.ability.kcolor};">${esc(d.ability.kategori)}</span></td>
+          <td>${new Date(d.timestamp).toLocaleDateString('id-ID')}</td>
+          <td><button class="btn btn-ghost btn-sm" data-key="${esc(x.key)}" data-del="1">Hapus</button></td>
+        </tr>`;
+      }).join("")}
+      </tbody>
+    </table></div>`;
+  }
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      if(!confirm("Hapus data siswa ini?")) return;
+      await deleteSubmission(btn.dataset.key);
+      toast("Data dihapus.");
+      loadAdmin();
+    });
+  });
+}
+
+function exportCsv(){
+  const rows = state.adminData;
+  const header = ["Nama","Kelas","Gaya Belajar Dominan","Skor Visual","Skor Auditori","Skor Kinestetik","Skor Bahasa","Skor Numerik","Skor Penalaran","Skor Total","Kategori","Tanggal"];
+  const lines = [header.join(",")];
+  rows.forEach(x=>{
+    const d = x.data;
+    const vals = [d.nama, d.kelas, d.vak.dominan, d.vak.visual, d.vak.auditori, d.vak.kinestetik,
+      d.ability.Bahasa, d.ability.Numerik, d.ability.Penalaran, d.ability.total, d.ability.kategori,
+      new Date(d.timestamp).toLocaleDateString('id-ID')];
+    lines.push(vals.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(","));
+  });
+  const blob = new Blob(["\uFEFF"+lines.join("\r\n")], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "rekap-hasil-tes-diagnostik.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function renderAdmin(){
+  root.innerHTML = `
+    <div class="shell">
+      ${brandbar("Area Guru")}
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+          <h1 class="hero" style="font-size:20px; margin:0;">Rekap Hasil Siswa</h1>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline btn-sm" id="btn-refresh">\u21BB Muat Ulang</button>
+            <button class="btn btn-primary btn-sm" id="btn-csv">\u2B07 Unduh CSV</button>
+          </div>
+        </div>
+        <div id="admin-body"></div>
+        <div class="link-row"><button id="btn-logout">\u2190 Keluar dari area guru</button></div>
+      </div>
+    </div>
+  `;
+  renderAdminTable();
+  document.getElementById("btn-refresh").addEventListener("click", loadAdmin);
+  document.getElementById("btn-csv").addEventListener("click", exportCsv);
+  document.getElementById("btn-logout").addEventListener("click", ()=>{ state.view="home"; render(); });
+}
+
+// ---------------------------------------------------------------
+// ROUTER
+// ---------------------------------------------------------------
+function render(){
+  window.scrollTo(0,0);
+  if(state.view==="home") renderHome();
+  else if(state.view==="vak") renderVak();
+  else if(state.view==="passage") renderPassage();
+  else if(state.view==="ability") renderAbility();
+  else if(state.view==="result") renderResult();
+  else if(state.view==="admin-login") renderAdminLogin();
+  else if(state.view==="admin") renderAdmin();
+}
+
+render();
+})();
+</script>
