@@ -613,8 +613,10 @@ async function finishTest(){
   const vak = computeVak(state.vakAnswers);
   const ability = computeAbility(state.abilityAnswers);
   const result = {
-    nama: state.nama, nisn: state.nisn, kelas: state.kelas, timestamp: Date.now(),
-    vak, ability
+    nama: state.nama, kelas: state.kelas, timestamp: Date.now(),
+    vak, ability,
+    vakAnswers: state.vakAnswers.slice(),
+    abilityAnswers: state.abilityAnswers.slice()
   };
   state.result = result;
   root.innerHTML = `<div class="shell"><div class="card"><p class="lede">Menyimpan hasil...</p></div></div>`;
@@ -696,38 +698,145 @@ function downloadPdf(r){
   try{
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({unit:"pt", format:"a4"});
-    const margin = 48; let y = margin;
+    const margin = 48;
+    const pageW = 595.28, pageH = 841.89;
+    const contentW = pageW - margin*2;
+    let y = margin;
+
+    const INK = [30,42,58];
+    const SOFT = [91,107,127];
+    const GOOD = [42,169,107];
+    const BAD = [221,93,93];
+    const SUBTES_RGB = {Bahasa:[59,125,216], Numerik:[224,138,60], Penalaran:[52,160,107]};
+
+    function checkPage(needed){
+      if(y + needed > pageH - margin){
+        doc.addPage();
+        y = margin;
+      }
+    }
+    function sectionTitle(text){
+      checkPage(34);
+      doc.setFont("helvetica","bold"); doc.setFontSize(13);
+      doc.setTextColor(...INK);
+      doc.text(text, margin, y); y += 8;
+      doc.setDrawColor(108,92,224); doc.setLineWidth(1.2);
+      doc.line(margin, y, margin+contentW, y);
+      y += 18;
+    }
+
+    // ---- HEADER ----
     doc.setFont("helvetica","bold"); doc.setFontSize(18);
-    doc.text("Hasil Tes Diagnostik Siswa", margin, y); y+=26;
-    doc.setDrawColor(225,232,240); doc.line(margin,y,545,y); y+=22;
+    doc.setTextColor(...INK);
+    doc.text("Laporan Hasil Tes Diagnostik Siswa", margin, y); y += 24;
+    doc.setDrawColor(225,232,240); doc.setLineWidth(1);
+    doc.line(margin, y, margin+contentW, y); y += 20;
 
     doc.setFontSize(11); doc.setFont("helvetica","normal");
-    doc.text(`Nama Siswa : ${r.nama}`, margin, y); y+=16;
-    doc.text(`NISN       : ${r.nisn||'-'}`, margin, y); y+=16;
-    doc.text(`Kelas      : ${r.kelas}`, margin, y); y+=16;
-    doc.text(`Tanggal    : ${new Date(r.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`, margin, y); y+=28;
+    doc.text(`Nama Siswa : ${r.nama}`, margin, y); y += 16;
+    doc.text(`Kelas      : ${r.kelas}`, margin, y); y += 16;
+    doc.text(`Tanggal    : ${new Date(r.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`, margin, y); y += 26;
 
-    doc.setFont("helvetica","bold"); doc.setFontSize(13);
-    doc.text("1. Gaya Belajar (VAK)", margin, y); y+=18;
-    doc.setFont("helvetica","normal"); doc.setFontSize(11);
-    doc.text(`Skor Visual: ${r.vak.visual} / 15   Auditori: ${r.vak.auditori} / 15   Kinestetik: ${r.vak.kinestetik} / 15`, margin, y); y+=16;
+    // ---- 1. RINGKASAN GAYA BELAJAR ----
+    sectionTitle("1. Ringkasan Gaya Belajar (VAK)");
+    doc.setFont("helvetica","normal"); doc.setFontSize(11); doc.setTextColor(...INK);
+    doc.text(`Skor Visual: ${r.vak.visual} / 15   Auditori: ${r.vak.auditori} / 15   Kinestetik: ${r.vak.kinestetik} / 15`, margin, y); y += 16;
     doc.setFont("helvetica","bold");
-    doc.text(`Gaya Belajar Dominan: ${r.vak.dominan}`, margin, y); y+=16;
+    doc.text(`Gaya Belajar Dominan: ${r.vak.dominan}`, margin, y); y += 16;
     doc.setFont("helvetica","normal");
-    const recLines = doc.splitTextToSize(`Saran: ${REKOMENDASI[r.vak.dominan]}`, 497);
+    const recLines = doc.splitTextToSize(`Saran: ${REKOMENDASI[r.vak.dominan]}`, contentW);
+    checkPage(recLines.length*14);
     doc.text(recLines, margin, y); y += recLines.length*14 + 18;
 
-    doc.setFont("helvetica","bold"); doc.setFontSize(13);
-    doc.text("2. Kemampuan Belajar Dasar", margin, y); y+=18;
-    doc.setFont("helvetica","normal"); doc.setFontSize(11);
-    doc.text(`Skor Bahasa   : ${r.ability.Bahasa}`, margin, y); y+=16;
-    doc.text(`Skor Numerik  : ${r.ability.Numerik}`, margin, y); y+=16;
-    doc.text(`Skor Penalaran: ${r.ability.Penalaran}`, margin, y); y+=16;
+    // ---- 2. RINGKASAN KEMAMPUAN ----
+    sectionTitle("2. Ringkasan Kemampuan Belajar Dasar");
+    doc.setFontSize(11);
+    doc.text(`Skor Bahasa   : ${r.ability.Bahasa}`, margin, y); y += 16;
+    doc.text(`Skor Numerik  : ${r.ability.Numerik}`, margin, y); y += 16;
+    doc.text(`Skor Penalaran: ${r.ability.Penalaran}`, margin, y); y += 16;
     doc.setFont("helvetica","bold");
-    doc.text(`Skor Total    : ${r.ability.total}  (${r.ability.kategori})`, margin, y); y+=28;
+    doc.text(`Skor Total    : ${r.ability.total}  (${r.ability.kategori})`, margin, y); y += 26;
 
-    doc.setFontSize(9); doc.setFont("helvetica","italic"); doc.setTextColor(120,120,120);
-    doc.text("Dokumen ini dihasilkan otomatis oleh aplikasi Tes Diagnostik Siswa SD.", margin, 780);
+    // ---- 3. RINCIAN JAWABAN GAYA BELAJAR ----
+    sectionTitle("3. Rincian Jawaban - Angket Gaya Belajar");
+    const vakLabel = ["Visual","Auditori","Kinestetik"];
+    (r.vakAnswers||[]).forEach((ansIdx, i)=>{
+      const item = VAK_ITEMS[i];
+      const qLines = doc.splitTextToSize(`${i+1}. ${item.q}`, contentW);
+      checkPage(qLines.length*13 + 18);
+      doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(...INK);
+      doc.text(qLines, margin, y); y += qLines.length*13 + 2;
+      doc.setFont("helvetica","normal"); doc.setTextColor(...SOFT);
+      const ansText = ansIdx!=null ? `Jawaban: ${item.opts[ansIdx]}  (${vakLabel[ansIdx]})` : "Jawaban: -";
+      const aLines = doc.splitTextToSize(ansText, contentW-10);
+      checkPage(aLines.length*12 + 8);
+      doc.text(aLines, margin+10, y); y += aLines.length*12 + 8;
+    });
+    y += 8;
+
+    // ---- 4. RINCIAN JAWABAN KEMAMPUAN ----
+    sectionTitle("4. Rincian Jawaban - Tes Kemampuan Belajar");
+    (r.abilityAnswers||[]).forEach((ansIdx, i)=>{
+      const item = ABILITY_ITEMS[i];
+      const isCorrect = ansIdx === item.correct;
+      const rgb = SUBTES_RGB[item.subtes];
+
+      const qLines = doc.splitTextToSize(`${i+1}. [${item.subtes}] ${item.q}`, contentW);
+      checkPage(qLines.length*13 + 32);
+      doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(...rgb);
+      doc.text(qLines, margin, y); y += qLines.length*13 + 2;
+
+      doc.setFont("helvetica","normal"); doc.setTextColor(...SOFT);
+      const studentAnsText = ansIdx!=null ? item.opts[ansIdx] : "-";
+      const line1 = doc.splitTextToSize(`Jawaban Siswa : ${studentAnsText}`, contentW-10);
+      checkPage(line1.length*12);
+      doc.text(line1, margin+10, y); y += line1.length*12;
+
+      if(!isCorrect){
+        const line2 = doc.splitTextToSize(`Jawaban Benar : ${item.opts[item.correct]}`, contentW-10);
+        checkPage(line2.length*12);
+        doc.text(line2, margin+10, y); y += line2.length*12;
+      }
+
+      checkPage(14);
+      doc.setFont("helvetica","bold"); doc.setFontSize(10);
+      if(isCorrect){ doc.setTextColor(...GOOD); doc.text("\u2713 Benar", margin+10, y); }
+      else { doc.setTextColor(...BAD); doc.text("\u2717 Salah", margin+10, y); }
+      y += 16;
+    });
+
+    // ---- 5. TANDA TANGAN ----
+    checkPage(150);
+    y += 10;
+    doc.setDrawColor(225,232,240); doc.setLineWidth(1);
+    doc.line(margin, y, margin+contentW, y); y += 24;
+
+    const colGap = 20;
+    const colW = (contentW - colGap) / 2;
+    const col2X = margin + colW + colGap;
+
+    doc.setFont("helvetica","normal"); doc.setFontSize(11); doc.setTextColor(...INK);
+    doc.text("Mengetahui,", margin, y);
+    doc.text("Mengetahui,", col2X, y);
+    y += 62;
+
+    doc.setDrawColor(...INK); doc.setLineWidth(0.8);
+    doc.line(margin, y, margin+180, y);
+    doc.line(col2X, y, col2X+180, y);
+    y += 14;
+
+    doc.setFontSize(10);
+    doc.text("( Guru Kelas )", margin, y);
+    doc.text("( Orang Tua / Wali )", col2X, y);
+
+    // ---- FOOTER (nomor halaman + catatan) ----
+    const totalPages = doc.internal.getNumberOfPages();
+    for(let p=1; p<=totalPages; p++){
+      doc.setPage(p);
+      doc.setFontSize(8.5); doc.setFont("helvetica","italic"); doc.setTextColor(140,140,140);
+      doc.text("Dokumen ini dihasilkan otomatis oleh aplikasi Tes Diagnostik Siswa SD.", margin, pageH-30);
+      doc.text(`Halaman ${p} / ${totalPages}`, pageW-margin-70, pageH-30);
+    }
 
     doc.save(`Hasil-Tes-${r.nama.replace(/\s+/g,'_')}.pdf`);
   }catch(e){
